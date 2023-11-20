@@ -1,0 +1,33 @@
+import socket
+import threading
+
+def create_server():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('localhost', 12345))
+    server.listen(5)
+    print("Server is ready to accept connections...")
+    while True:
+        client_socket, addr = server.accept()
+        print("Connection accepted from ", addr)
+        client_socket.send(bytes("Welcome to the Chat Room...", 'utf-8'))
+        client_handler = threading.Thread(target=handle_client, args=(client_socket,))
+        client_handler.start()
+
+def handle_client(client_socket):
+    message = client_socket.recv(1024)
+    print("Message received from client: ", message.decode('utf-8'))
+    client_socket.close()
+
+def create_client():
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(('localhost', 12345))
+    print("Connected to the Server...")
+    message = input("Enter a message to send: ")
+    client.send(bytes(message, 'utf-8'))
+    print("Message sent to the Server...")
+    client.close()
+
+if __name__ == "__main__":
+    server_thread = threading.Thread(target=create_server)
+    server_thread.start()
+    create_client()

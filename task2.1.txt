@@ -1,0 +1,77 @@
+import sqlite3
+import datetime
+def initialize_database():
+    conn = sqlite3.connect('expenses.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            description TEXT,
+            amount REAL
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+def record_expense(description, amount):
+    conn = sqlite3.connect('expenses.db')
+    cursor = conn.cursor()
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    cursor.execute('INSERT INTO expenses (date, description, amount) VALUES (?, ?, ?)', (date, description, amount))
+
+    conn.commit()
+    conn.close()
+def generate_monthly_report(month, year):
+    conn = sqlite3.connect('expenses.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT date, description, amount
+        FROM expenses
+        WHERE strftime('%Y-%m', date) = ?
+    ''', (f'{year:04d}-{month:02d}',))
+
+    expenses = cursor.fetchall()
+
+    conn.close()
+    total_expenses = 0
+    if expenses:
+        print(f"\nMonthly Expense Report for {month:02d}/{year}:")
+        print("{:<12} {:<20} {:<10}".format("Date", "Description", "Amount"))
+        print("-" * 42)
+        for expense in expenses:
+            print("{:<12} {:<20} {:<10}".format(expense[0], expense[1], expense[2]))
+            total_expenses += expense[2]
+        print("-" * 42)
+        print("Total Expenses: {:.2f}".format(total_expenses))
+    else:
+        print(f"No expenses recorded for {month:02d}/{year}.")
+def main():
+    initialize_database()
+
+    while True:
+        print("\nExpense Tracker Menu:")
+        print("1. Record an Expense")
+        print("2. Generate Monthly Report")
+        print("3. Exit")
+
+        choice = input("Enter your choice (1/2/3): ")
+
+        if choice == '1':
+            description = input("Enter expense description: ")
+            amount = float(input("Enter expense amount: "))
+            record_expense(description, amount)
+            print("Expense recorded successfully!")
+        elif choice == '2':
+            month = int(input("Enter month (1-12): "))
+            year = int(input("Enter year: "))
+            generate_monthly_report(month, year)
+        elif choice == '3':
+            print("Exiting Expense Tracker. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please enter 1, 2, or 3.")
+
+
+if _name_ == "_main_":
+    main()
